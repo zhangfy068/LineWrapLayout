@@ -3,9 +3,6 @@
 
 用法
    TextView textView = new TextView(context);
-			textView.setText(leafEntity.getName());
-			textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
-			textView.setTextColor(context.getResources().getColor(R.color.TextColorHint));
 			LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,         LinearLayout.LayoutParams.WRAP_CONTENT);
 			params.gravity = Gravity.CENTER_VERTICAL;
 			wrapLineLayout.addView(textView, params);
