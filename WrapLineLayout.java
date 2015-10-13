@@ -8,16 +8,16 @@ import com.ta.common.Queue;
 import com.ta.util.TALogger;
 import com.ta.util.extend.draw.DensityUtils;
 
-public class WrapLineLayout2 extends ViewGroup {
+public class WrapLineLayout extends ViewGroup {
 
 	private int VIEW_MARGIN = 10;
 
-	public WrapLineLayout2(Context context, AttributeSet attrs) {
+	public WrapLineLayout(Context context, AttributeSet attrs) {
 		super(context, attrs);
 		VIEW_MARGIN = DensityUtils.dipTopx(context, 10);
 	}
 
-	public WrapLineLayout2(Context context) {
+	public WrapLineLayout(Context context) {
 		super(context);
 		VIEW_MARGIN = DensityUtils.dipTopx(context, 10);
 	}
