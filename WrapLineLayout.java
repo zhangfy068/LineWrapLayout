@@ -11,65 +11,16 @@ import com.ta.util.extend.draw.DensityUtils;
 public class WrapLineLayout2 extends ViewGroup {
 
 	private int VIEW_MARGIN = 10;
-	private int leftMargin = VIEW_MARGIN;
 
 	public WrapLineLayout2(Context context, AttributeSet attrs) {
 		super(context, attrs);
 		VIEW_MARGIN = DensityUtils.dipTopx(context, 10);
-		leftMargin = VIEW_MARGIN;
 	}
 
 	public WrapLineLayout2(Context context) {
 		super(context);
 		VIEW_MARGIN = DensityUtils.dipTopx(context, 10);
-		leftMargin = VIEW_MARGIN;
 	}
-
-
-	/*@Override
-	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-		int measureMaxWidth = measureWidth(widthMeasureSpec);
-		int measureHeight = measureHeight(heightMeasureSpec);
-		// 计算自定义的ViewGroup中所有子控件的大小
-		measureChildren(widthMeasureSpec, heightMeasureSpec);
-		int needSumHeight = 0;
-		// 设置自定义的控件MyViewGroup的大小
-		int row = 0;
-		int lengthX = 0;
-		int maxlineHeight = 0;//当前行最大高度
-		int avalidMaxWidth = measureMaxWidth - VIEW_MARGIN;
-		RowBean rowBean = new RowBean();
-		for (int index = 0; index < getChildCount(); index++) {
-			final View child = getChildAt(index);
-			child.measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
-			lengthX += child.getMeasuredWidth() + VIEW_MARGIN;//宽度持续递增
-			if (lengthX > avalidMaxWidth) {//需要换行
-				if (rowBean.num == 0) {//本行第一个内容超过了最大长度
-					lengthX = 0;
-					needSumHeight += child.getMeasuredHeight();
-					maxlineHeight = child.getMeasuredHeight();
-				} else {
-					rowBean.num = 0;
-					lengthX = 0;
-					needSumHeight += child.getMeasuredHeight();
-					maxlineHeight = child.getMeasuredHeight();
-				}
-				row++;
-			} else {//同一行或,新增的一行
-				if (maxlineHeight != 0 && maxlineHeight < child.getMeasuredHeight()) {    //后面的内容高度比前面的高
-					needSumHeight += child.getMeasuredHeight() - maxlineHeight;
-					maxlineHeight = child.getMeasuredHeight();
-				} else if (needSumHeight == 0) {
-					needSumHeight = child.getMeasuredHeight();
-					maxlineHeight = child.getMeasuredHeight();
-				}
-				rowBean.num++;
-			}
-		}
-		needSumHeight += (row - 1) * VIEW_MARGIN + VIEW_MARGIN * 2;//加上多余的
-		System.out.println("WrapLineLayout.onMeasure need height " + needSumHeight);
-		setMeasuredDimension(measureMaxWidth, needSumHeight);
-	}*/
 
 
 	private int measureWidth(int pWidthMeasureSpec) {
