@@ -4,57 +4,22 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
+import com.ta.common.Queue;
 import com.ta.util.TALogger;
 import com.ta.util.extend.draw.DensityUtils;
 
 public class WrapLineLayout extends ViewGroup {
-	/*左右margin*/
-	private  int VIEW_MARGIN = 10;
+
+	private int VIEW_MARGIN = 10;
 
 	public WrapLineLayout(Context context, AttributeSet attrs) {
 		super(context, attrs);
-//		VIEW_MARGIN = DensityUtils.dipTopx(context, 10);
+		VIEW_MARGIN = DensityUtils.dipTopx(context, 10);
 	}
 
 	public WrapLineLayout(Context context) {
 		super(context);
-//		VIEW_MARGIN = DensityUtils.dipTopx(context, 10);
-	}
-
-	@Override
-	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-		int measureWidth = measureWidth(widthMeasureSpec);
-		int measureHeight = measureHeight(heightMeasureSpec);
-		// 计算自定义的ViewGroup中所有子控件的大小
-		measureChildren(widthMeasureSpec, heightMeasureSpec);
-		int height = 0;
-		// 设置自定义的控件MyViewGroup的大小
-		int row = 1;
-		int lengthX = 0;
-		int maxLineLength = 0;//当前行最大高度
-		for (int index = 0; index < getChildCount(); index++) {
-			final View child = getChildAt(index);
-			child.measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
-			lengthX += (child.getMeasuredWidth() + VIEW_MARGIN);//宽度持续递增
-			if (lengthX > (measureWidth - VIEW_MARGIN)) {//需要换行
-				row++;
-				lengthX = 0;
-				height += child.getMeasuredHeight();
-				maxLineLength = child.getMeasuredHeight();
-			} else {//同一行或,新增的一行
-				if (maxLineLength != 0 && maxLineLength < child.getMeasuredHeight()) {    //后面的内容高度比前面的高
-					height += child.getMeasuredHeight() - maxLineLength;
-					maxLineLength = child.getMeasuredHeight();
-				} else if (height == 0) {
-					height = child.getMeasuredHeight();
-					maxLineLength = child.getMeasuredHeight();
-				}
-
-			}
-		}
-		height += (row-1) * VIEW_MARGIN + VIEW_MARGIN * 2;
-//		System.out.println("WrapLineLayout.onMeasure need height " + height);
-		setMeasuredDimension(measureWidth, height);
+		VIEW_MARGIN = DensityUtils.dipTopx(context, 10);
 	}
 
 
@@ -108,29 +73,95 @@ public class WrapLineLayout extends ViewGroup {
 
 
 	@Override
-	protected void onLayout(boolean arg0, int l, int t, int r, int b) {
-
-		final int count = getChildCount();
-		int row = 0;// which row lay you view relative to parent
-		int lengthX = l; // right position of child relative to parent
-		int lengthY = 0; // bottom position of child relative to parent
-		for (int i = 0; i < count; i++) {
-			final View child = this.getChildAt(i);
-			int width = child.getMeasuredWidth();
-			int height = child.getMeasuredHeight();
-			lengthX += (width + VIEW_MARGIN);//宽度持续递增
-			lengthY = row * (height + VIEW_MARGIN) + VIEW_MARGIN + height;
-			// if it can't drawing on a same line , skip to next line
-			//换行
-			if (lengthX > r - VIEW_MARGIN) {//长度不够,需要换行,重新计算位置
-				lengthX = width + VIEW_MARGIN + l;//更改换行宽度
-				row++;
-				lengthY = row * (height + VIEW_MARGIN) + VIEW_MARGIN + height;
-			}
-			//此处设置的,永远都是相对于屏幕的位置.
-			TALogger.i(this, "row = " + row + " " + (lengthX - width) + " " + (lengthY - height) + " " + lengthX + " " + lengthY);
-
-			child.layout(lengthX - width, lengthY - height, lengthX, lengthY);
+	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+		int measureMaxWidth = measureWidth(widthMeasureSpec);
+		int measureHeight = measureHeight(heightMeasureSpec);
+		// 计算自定义的ViewGroup中所有子控件的大小
+		measureChildren(widthMeasureSpec, heightMeasureSpec);
+		RowBean rowBean = new RowBean();
+		int maxAvalidWidth = measureMaxWidth - 2 * VIEW_MARGIN;
+		int needSumHeight = 0;
+		for (int i = 0; i < getChildCount(); i++) {
+			final View child = getChildAt(i);
+			child.measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
+			needSumHeight = addchild(rowBean, maxAvalidWidth, i, true);
 		}
+		needSumHeight += VIEW_MARGIN;
+		System.out.println("WrapLineLayout2.onMeasure " + rowBean.row);
+		System.out.println("WrapLineLayout.onMeasure need height " + needSumHeight + " measureMaxWidth=" + measureMaxWidth + " measureHeight=" + measureHeight);
+		setMeasuredDimension(measureMaxWidth, needSumHeight);
+
 	}
+
+	@Override
+	protected void onLayout(boolean arg0, int l, int t, int r, int b) {
+		final int count = getChildCount();
+		RowBean rowBean = new RowBean();
+		int maxAvalidWidth = r - 2 * VIEW_MARGIN;
+		for (int i = 0; i < count; i++) {
+			addchild(rowBean, maxAvalidWidth, i, false);
+		}
+
+
+	}
+
+	private int addchild(RowBean rowBean, int maxAvalidWidth, int i, boolean isGetHeight) {
+		int leftX = 0;
+		int rightX = 0;
+		int leftY = 0;
+		int rightY = 0;
+		final View child = this.getChildAt(i);
+		int childWidth = child.getMeasuredWidth();
+		int childHeight = child.getMeasuredHeight();
+		int currentX = rowBean.lengthX;
+		if (rowBean.num > 0) {
+			currentX += VIEW_MARGIN + childWidth;
+		} else {
+			currentX += childWidth;
+		}
+		if (currentX > maxAvalidWidth) {//超过了最大可用长度
+			if (rowBean.num == 0) {//此行第一个超过长度
+				rowBean.row++;
+				rowBean.num = 1;
+				leftX = VIEW_MARGIN;
+				rightX = maxAvalidWidth - VIEW_MARGIN;
+				leftY = rowBean.row * VIEW_MARGIN + (rowBean.row - 1) * childHeight;
+				rightY = leftY + childHeight;
+				currentX = rightX;
+			} else {//第X个需要换行 X>1
+				rowBean.num = 1;
+				rowBean.row++;
+				leftX = VIEW_MARGIN;
+				if (childWidth > maxAvalidWidth) {
+					childWidth = maxAvalidWidth;
+				}
+				rightX = leftX + childWidth;
+				leftY = rowBean.row * VIEW_MARGIN + (rowBean.row - 1) * childHeight;
+				rightY = leftY + childHeight;
+				currentX = rightX - VIEW_MARGIN;
+			}
+		} else {//直接添加
+			if (rowBean.row == 0) {
+				rowBean.row++;
+			}
+			leftX = currentX - childWidth + VIEW_MARGIN;
+			leftY = rowBean.row * VIEW_MARGIN + (rowBean.row - 1) * childHeight;
+			rightX = currentX + VIEW_MARGIN;
+			rightY = leftY + childHeight;
+			rowBean.num++;
+		}
+		if (!isGetHeight) {
+			TALogger.i(this, "index =" + i + " " + leftX + " " + leftY + " " + rightX + " " + rightY);
+			child.layout(leftX, leftY, rightX, rightY);
+		}
+		rowBean.lengthX = currentX;
+		return rightY;
+	}
+
+}
+
+class RowBean {
+	int row = 0;
+	int num = 0;
+	int lengthX = 0;
 }
